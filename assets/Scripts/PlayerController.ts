@@ -1,10 +1,13 @@
-import { _decorator, Component, Vec3, EventMouse, input, Input } from "cc";
+import { _decorator, Component, Vec3, EventMouse, input, Input, Animation } from "cc";
 const { ccclass, property } = _decorator;
 
 export const BLOCK_SIZE = 40;
 
 @ccclass("PlayerController")
 export class PlayerController extends Component {
+
+    @property(Animation)
+    BodyAnim: Animation = null;
 
     private _startJump: boolean = false;
     private _jumpStep: number = 0;
@@ -15,12 +18,12 @@ export class PlayerController extends Component {
     private _deltaPos: Vec3 = new Vec3(0, 0, 0);
     private _targetPos: Vec3 = new Vec3();
 
-    start () {
+    start() {
         input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
     }
 
     reset() {
-    }   
+    }
 
     onMouseUp(event: EventMouse) {
         if (event.getButton() === 0) {
@@ -38,18 +41,29 @@ export class PlayerController extends Component {
         this._startJump = true;
         this._jumpStep = step;
         this._curJumpTime = 0;
-        this._curJumpSpeed = this._jumpStep * BLOCK_SIZE/ this._jumpTime;
+        this._curJumpSpeed = this._jumpStep * BLOCK_SIZE / this._jumpTime;
         this.node.getPosition(this._curPos);
-        Vec3.add(this._targetPos, this._curPos, new Vec3(this._jumpStep* BLOCK_SIZE, 0, 0));    
+        Vec3.add(this._targetPos, this._curPos, new Vec3(this._jumpStep * BLOCK_SIZE, 0, 0));
+
+        if (this.BodyAnim) {
+            if (step === 1) {
+                this.BodyAnim.play('oneStep')
+            } else if (step === 2) {
+                this.BodyAnim.play('twoStep')
+            }
+        }
+        const oneStep = 'oneStep';
+        const state = this.BodyAnim.getState(oneStep)
+        this._jumpTime = state.duration
     }
 
-    update (deltaTime: number) {
+    update(deltaTime: number) {
         if (this._startJump) {
             this._curJumpTime += deltaTime;
             if (this._curJumpTime > this._jumpTime) {
                 // end
                 this.node.setPosition(this._targetPos);
-                this._startJump = false;              
+                this._startJump = false;
             } else {
                 // tween
                 this.node.getPosition(this._curPos);
@@ -59,4 +73,6 @@ export class PlayerController extends Component {
             }
         }
     }
+
+    
 }
